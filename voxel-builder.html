@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voxel Builder</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #f3f4f6;
+    --panel: #ffffff;
+    --panel-2: #eef0f3;
+    --panel-translucent: rgba(255,255,255,0.88);
+    --border: #d9dce2;
+    --text: #1b1f26;
+    --text-dim: #6b7280;
+    --amber: #d97a1f;
+    --amber-dim: #f0b26b;
+    --amber-text: #3a2405;
+    --moss: #2f9d68;
+    --hover-bg: #e4e7ec;
+    --hover-border: #b9bfc9;
+    --danger-border: #e3b0ab;
+    --danger-text: #a5322a;
+    --danger-hover: #fbe9e7;
+    --checker-a: #eef0f3;
+    --checker-b: #e5e8ed;
+    --grid-line: rgba(0,0,0,0.08);
+    --shadow: rgba(20,23,28,0.12);
+  }
+  html[data-theme="dark"]{
+    --bg: #14171c;
+    --panel: #1b1f26;
+    --panel-2: #21262f;
+    --panel-translucent: rgba(20,23,28,0.82);
+    --border: #2c323d;
+    --text: #e7eaf0;
+    --text-dim: #8b93a3;
+    --amber: #ff9d3b;
+    --amber-dim: #7a5423;
+    --amber-text: #fff2e2;
+    --moss: #4caf7d;
+    --hover-bg: #262c36;
+    --hover-border: #454e5c;
+    --danger-border: #5b3230;
+    --danger-text: #e8a6a0;
+    --danger-hover: #2a1918;
+    --checker-a: #1e232b;
+    --checker-b: #191d24;
+    --grid-line: rgba(255,255,255,0.06);
+    --shadow: rgba(0,0,0,0.35);
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+    overflow: hidden;
+    transition: background .15s ease, color .15s ease;
+  }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--panel);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .brand { display: flex; align-items: baseline; gap: 12px; }
+  .brand .logo {
+    font-family: "Press Start 2P", monospace;
+    font-size: 14px;
+    color: var(--amber);
+    letter-spacing: 1px;
+  }
+  .brand .tag { font-size: 12.5px; color: var(--text-dim); }
+  .header-actions { display: flex; gap: 10px; }
+
+  button {
+    font-family: inherit;
+    font-size: 13px;
+    background: var(--panel-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    cursor: pointer;
+    transition: border-color .12s ease, background .12s ease;
+  }
+  button:hover { border-color: var(--hover-border); background: var(--hover-bg); }
+  button:active { transform: translateY(1px); }
+  button.primary { background: var(--amber-dim); border-color: var(--amber); color: var(--amber-text); }
+  button.primary:hover { filter: brightness(0.93); }
+  button.active { background: var(--moss); border-color: var(--moss); color: #06231a; font-weight: 600; }
+  button.danger-outline { border-color: var(--danger-border); color: var(--danger-text); background: transparent; }
+  button.danger-outline:hover { background: var(--danger-hover); }
+  button:disabled { opacity: .4; cursor: not-allowed; }
+  button.icon-btn { width: 34px; padding: 7px 0; font-weight: 700; }
+  #themeToggle { font-size: 16px; padding: 6px 11px; }
+
+  main { flex: 1; display: flex; min-height: 0; }
+
+  .sidebar {
+    width: 250px;
+    flex-shrink: 0;
+    padding: 16px;
+    overflow-y: auto;
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+  }
+  .sidebar h2 {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: var(--text-dim);
+    margin: 0 0 10px 0;
+    font-weight: 600;
+  }
+  .section { margin-bottom: 24px; }
+
+  .axis-tabs { display: flex; gap: 6px; margin-bottom: 8px; }
+  .axis-tabs button { flex: 1; font-weight: 700; }
+
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+  .swatch {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 2px solid transparent;
+    cursor: pointer;
+  }
+  .swatch.selected { border-color: var(--amber); box-shadow: 0 0 0 1px var(--amber); }
+  .swatch-custom {
+    aspect-ratio: 1;
+    border-radius: 6px;
+    border: 2px dashed var(--border);
+    display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+    cursor: pointer;
+  }
+  .swatch-custom.selected { border-color: var(--amber); border-style: solid; }
+  .swatch-custom input[type=color] {
+    position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px);
+    border: none; padding: 0; cursor: pointer; background: none;
+  }
+  .swatch-custom span { pointer-events: none; font-size: 16px; color: var(--text-dim); }
+
+  .tool-toggle { display: flex; gap: 8px; margin-bottom: 6px; }
+  .tool-toggle button { flex: 1; }
+
+  .hint { font-size: 11.5px; color: var(--text-dim); line-height: 1.5; margin: 6px 0 0 0; }
+
+  .status-line { font-size: 11.5px; color: var(--moss); min-height: 16px; margin-top: 4px; }
+
+  .layer-nav { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .layer-nav .readout { flex: 1; text-align: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+
+  .zoom-row { display: flex; gap: 8px; }
+  .zoom-row button { flex: 1; }
+
+  .viewport-wrap {
+    flex: 1;
+    position: relative;
+    min-width: 0;
+    background: var(--bg);
+  }
+  .grid-scroll {
+    position: absolute; inset: 0;
+    overflow: hidden;
+  }
+  #gridCanvas {
+    display: block;
+    width: 100%;
+    height: 100%;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+  }
+  #gridCanvas.dragging { cursor: grabbing; }
+
+  .coord-readout {
+    position: absolute;
+    bottom: 14px; left: 16px;
+    font-size: 11px;
+    color: var(--text-dim);
+    background: var(--panel-translucent);
+    padding: 5px 10px; border-radius: 6px;
+    border: 1px solid var(--border);
+    pointer-events: none;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .preview-box {
+    position: absolute;
+    top: 16px; right: 16px;
+    width: 176px; height: 176px;
+    background: var(--panel-translucent);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 6px 24px var(--shadow);
+    transition: width .18s ease, height .18s ease;
+  }
+  .preview-box.expanded {
+    width: min(72vw, 640px);
+    height: min(72vh, 640px);
+  }
+  .preview-box .label {
+    position: absolute; top: 6px; left: 8px;
+    font-size: 9.5px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--text-dim);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .preview-box .empty-note {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; color: var(--text-dim); text-align: center; padding: 20px;
+    pointer-events: none;
+  }
+  .preview-box .expand-btn {
+    position: absolute; top: 4px; right: 4px; z-index: 3;
+    width: 22px; height: 22px; padding: 0;
+    font-size: 12px; line-height: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  #previewCanvas { width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  #previewCanvas.dragging { cursor: grabbing; }
+
+  input[type=file] { display: none; }
+
+  @media (max-width: 760px) {
+    main { flex-direction: column; overflow-y: auto; }
+    .sidebar { width: 100%; border-right: none; border-bottom: 1px solid var(--border); max-height: 44vh; }
+    .viewport-wrap { min-height: 50vh; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="brand">
+      <span class="logo">VOXEL</span>
+      <span class="tag">an endless page, paint and pan freely</span>
+    </div>
+    <div class="header-actions">
+      <button id="themeToggle" title="Toggle light / dark mode">🌙</button>
+      <button id="importBtn">Import</button>
+      <button id="exportBtn" class="primary">Export</button>
+      <input type="file" id="fileInput" accept="application/json">
+    </div>
+  </header>
+
+  <main>
+    <div class="sidebar">
+
+      <div class="section">
+        <h2>Looking down</h2>
+        <div class="axis-tabs">
+          <button id="axisX" data-axis="X">X</button>
+          <button id="axisY" data-axis="Y" class="active">Y</button>
+          <button id="axisZ" data-axis="Z">Z</button>
+        </div>
+        <p class="hint">Pick which axis you're slicing through. Y looks down from above (build up in height); X and Z look at the build from the side.</p>
+      </div>
+
+      <div class="section">
+        <h2>Layer</h2>
+        <div class="layer-nav">
+          <button id="layerDown" class="icon-btn">▼</button>
+          <span class="readout" id="layerReadout">Y = 0</span>
+          <button id="layerUp" class="icon-btn">▲</button>
+        </div>
+        <p class="hint">Move up/down (or arrow keys) to slice through the build along the chosen axis.</p>
+      </div>
+
+      <div class="section">
+        <h2>View</h2>
+        <div class="zoom-row">
+          <button id="zoomOut">–</button>
+          <button id="zoomReset">Reset</button>
+          <button id="zoomIn">+</button>
+        </div>
+        <p class="hint">Click and hold to drag the page around. Ctrl/Cmd + scroll to zoom.</p>
+      </div>
+
+      <div class="section">
+        <h2>Color</h2>
+        <div class="swatches" id="swatches"></div>
+        <div class="swatch-custom" id="customSwatch" title="Custom color">
+          <span>+</span>
+          <input type="color" id="customColor" value="#ff9d3b">
+        </div>
+      </div>
+
+      <div class="section">
+        <h2>Tool</h2>
+        <div class="tool-toggle">
+          <button id="toolPaint" class="active">Paint</button>
+          <button id="toolErase">Erase</button>
+        </div>
+        <p class="hint">Right-click always erases, on any tool.</p>
+      </div>
+
+      <div class="section">
+        <h2>Clear</h2>
+        <div style="display:flex; gap:8px;">
+          <button id="clearLayer" style="flex:1;">This layer</button>
+          <button id="clearAll" class="danger-outline" style="flex:1;">Everything</button>
+        </div>
+        <div class="status-line" id="gridStatus"></div>
+      </div>
+
+    </div>
+
+    <div class="viewport-wrap">
+      <div class="grid-scroll" id="gridScroll">
+        <canvas id="gridCanvas"></canvas>
+      </div>
+      <div class="coord-readout" id="coordReadout">x 0, y 0, z 0</div>
+      <div class="preview-box">
+        <span class="label" id="previewLabel">Preview</span>
+        <button class="expand-btn" id="previewExpandBtn" title="Expand preview">⤢</button>
+        <canvas id="previewCanvas"></canvas>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+(function(){
+  "use strict";
+
+  // ---------------- State ----------------
+  // A single flat 3D block store: "x,y,z" -> color. There's no bounding box —
+  // any integer coordinate (including negative) is valid on every axis.
+  let blocks = new Map();
+  let axis = 'Y';        // which axis is the "depth"/layer direction: 'X' | 'Y' | 'Z'
+  let layerIndex = 0;    // current slice position along that axis (unbounded)
+  let tool = 'paint';
+  let currentColor = '#5b8a3c';
+
+  // Infinite 2D canvas camera for the slice view: world cell (col,row) -> screen px is
+  //   screenX = col * scale + offsetX
+  //   screenY = row * scale + offsetY
+  // scale is always uniform (same for both axes), so cells stay square.
+  const DEFAULT_SCALE = 28, MIN_SCALE = 3, MAX_SCALE = 120;
+  let scale = DEFAULT_SCALE;
+  let offsetX = 0, offsetY = 0;
+
+  let gridDirty = true;
+  let previewDirty = true;
+
+  const k3 = (x,y,z) => x + ',' + y + ',' + z;
+
+  // Maps between the on-screen (col,row) + layerIndex and real world (x,y,z),
+  // depending on which axis is currently the "depth" direction.
+  function compose(col, row, layer, ax){
+    if (ax === 'Y') return { x: col, y: layer, z: row };
+    if (ax === 'X') return { x: layer, y: row, z: col };
+    return { x: col, y: row, z: layer }; // Z
+  }
+  function decompose(x, y, z, ax){
+    if (ax === 'Y') return { col: x, row: z, layer: y };
+    if (ax === 'X') return { col: z, row: y, layer: x };
+    return { col: x, row: y, layer: z }; // Z
+  }
+
+  const PALETTE = [
+    { name: 'Grass', color: '#5b8a3c' },
+    { name: 'Dirt',  color: '#7a5230' },
+    { name: 'Stone', color: '#8a8a8e' },
+    { name: 'Wood',  color: '#6b4a2b' },
+    { name: 'Leaves',color: '#3f7d3f' },
+    { name: 'Sand',  color: '#d9c07a' },
+    { name: 'Water', color: '#3a6fb0' },
+    { name: 'Brick', color: '#9a4a3a' },
+    { name: 'Snow',  color: '#eef2f5' },
+    { name: 'Coal',  color: '#2b2b2e' },
+    { name: 'Gold',  color: '#d4af37' },
+    { name: 'Glass', color: '#bfe3e8' },
+  ];
+
+  // ---------------- DOM ----------------
+  const axisButtons = { X: document.getElementById('axisX'), Y: document.getElementById('axisY'), Z: document.getElementById('axisZ') };
+  const gridStatus = document.getElementById('gridStatus');
+  const layerUpBtn = document.getElementById('layerUp');
+  const layerDownBtn = document.getElementById('layerDown');
+  const layerReadout = document.getElementById('layerReadout');
+  const zoomOutBtn = document.getElementById('zoomOut');
+  const zoomInBtn = document.getElementById('zoomIn');
+  const zoomResetBtn = document.getElementById('zoomReset');
+  const swatchesEl = document.getElementById('swatches');
+  const customSwatch = document.getElementById('customSwatch');
+  const customColor = document.getElementById('customColor');
+  const toolPaintBtn = document.getElementById('toolPaint');
+  const toolEraseBtn = document.getElementById('toolErase');
+  const clearLayerBtn = document.getElementById('clearLayer');
+  const clearAllBtn = document.getElementById('clearAll');
+  const gridScroll = document.getElementById('gridScroll');
+  const gridCanvas = document.getElementById('gridCanvas');
+  const gridCtx = gridCanvas.getContext('2d');
+  const exportBtn = document.getElementById('exportBtn');
+  const importBtn = document.getElementById('importBtn');
+  const fileInput = document.getElementById('fileInput');
+  const previewLabel = document.getElementById('previewLabel');
+  const themeToggle = document.getElementById('themeToggle');
+  const coordReadout = document.getElementById('coordReadout');
+
+  function clamp(v, lo, hi){ return Math.max(lo, Math.min(hi, v)); }
+
+  // ---------------- Theme ----------------
+  function setTheme(mode){
+    document.documentElement.setAttribute('data-theme', mode);
+    themeToggle.textContent = mode === 'dark' ? '☀️' : '🌙';
+    themeToggle.title = mode === 'dark' ? 'Switch to light mode' : 'Switch to dark mode';
+    gridDirty = true;
+  }
+  themeToggle.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    setTheme(next);
+  });
+
+  // ---------------- Palette ----------------
+  function buildPalette(){
+    swatchesEl.innerHTML = '';
+    PALETTE.forEach(p => {
+      const el = document.createElement('div');
+      el.className = 'swatch';
+      el.style.background = p.color;
+      el.title = p.name;
+      el.dataset.color = p.color;
+      el.addEventListener('click', () => { currentColor = p.color; refreshPaletteSelection(); });
+      swatchesEl.appendChild(el);
+    });
+    refreshPaletteSelection();
+  }
+  function refreshPaletteSelection(){
+    [...swatchesEl.children].forEach(el => {
+      el.classList.toggle('selected', el.dataset.color.toLowerCase() === currentColor.toLowerCase());
+    });
+    const knownPreset = PALETTE.some(p => p.color.toLowerCase() === currentColor.toLowerCase());
+    customSwatch.classList.toggle('selected', !knownPreset);
+  }
+  customColor.addEventListener('input', () => { currentColor = customColor.value; refreshPaletteSelection(); });
+  customSwatch.querySelector('span').addEventListener('click', () => customColor.click());
+
+  // ---------------- Tool ----------------
+  toolPaintBtn.addEventListener('click', () => setTool('paint'));
+  toolEraseBtn.addEventListener('click', () => setTool('erase'));
+  function setTool(t){
+    tool = t;
+    toolPaintBtn.classList.toggle('active', t === 'paint');
+    toolEraseBtn.classList.toggle('active', t === 'erase');
+  }
+
+  // ---------------- Axis + layer navigation ----------------
+  function setAxis(a){
+    axis = a;
+    Object.keys(axisButtons).forEach(k => axisButtons[k].classList.toggle('active', k === a));
+    updateLayerReadout();
+    gridDirty = true;
+  }
+  Object.keys(axisButtons).forEach(k => axisButtons[k].addEventListener('click', () => setAxis(k)));
+
+  function updateLayerReadout(){ layerReadout.textContent = axis + ' = ' + layerIndex; }
+  function goToLayer(i){
+    layerIndex = i; // unbounded — the page is infinite on every axis
+    updateLayerReadout();
+    gridDirty = true;
+  }
+  layerUpBtn.addEventListener('click', () => goToLayer(layerIndex + 1));
+  layerDownBtn.addEventListener('click', () => goToLayer(layerIndex - 1));
+  document.addEventListener('keydown', (e) => {
+    if (document.activeElement && ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)) return;
+    if (e.key === 'ArrowUp' || e.key === 'PageUp') goToLayer(layerIndex + 1);
+    if (e.key === 'ArrowDown' || e.key === 'PageDown') goToLayer(layerIndex - 1);
+  });
+
+  // ---------------- Camera / canvas sizing ----------------
+  function resizeCanvasToViewport(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const w = gridScroll.clientWidth, h = gridScroll.clientHeight;
+    gridCanvas.width = Math.max(1, Math.round(w * dpr));
+    gridCanvas.height = Math.max(1, Math.round(h * dpr));
+    gridDirty = true;
+  }
+  function viewW(){ return gridScroll.clientWidth; }
+  function viewH(){ return gridScroll.clientHeight; }
+
+  function resetView(){
+    scale = DEFAULT_SCALE;
+    offsetX = viewW() / 2 - scale / 2;
+    offsetY = viewH() / 2 - scale / 2;
+    gridDirty = true;
+  }
+  function zoomAt(screenX, screenY, factor){
+    const worldX = (screenX - offsetX) / scale;
+    const worldY = (screenY - offsetY) / scale;
+    scale = clamp(scale * factor, MIN_SCALE, MAX_SCALE);
+    offsetX = screenX - worldX * scale;
+    offsetY = screenY - worldY * scale;
+    gridDirty = true;
+  }
+  zoomOutBtn.addEventListener('click', () => zoomAt(viewW()/2, viewH()/2, 1/1.25));
+  zoomInBtn.addEventListener('click', () => zoomAt(viewW()/2, viewH()/2, 1.25));
+  zoomResetBtn.addEventListener('click', resetView);
+
+  new ResizeObserver(resizeCanvasToViewport).observe(gridScroll);
+
+  // ---------------- Drawing the grid ----------------
+  function themeVar(name){ return getComputedStyle(document.documentElement).getPropertyValue(name).trim(); }
+
+  function drawGrid(){
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    gridCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const w = viewW(), h = viewH();
+    const checkerA = themeVar('--checker-a');
+    const checkerB = themeVar('--checker-b');
+    const gridLineColor = themeVar('--grid-line');
+    gridCtx.clearRect(0, 0, w, h);
+
+    const colStart = Math.floor((0 - offsetX) / scale) - 1;
+    const colEnd   = Math.ceil((w - offsetX) / scale) + 1;
+    const rowStart = Math.floor((0 - offsetY) / scale) - 1;
+    const rowEnd   = Math.ceil((h - offsetY) / scale) + 1;
+
+    // checkerboard, only for the visible range
+    for (let row = rowStart; row <= rowEnd; row++){
+      const y = row * scale + offsetY;
+      for (let col = colStart; col <= colEnd; col++){
+        gridCtx.fillStyle = ((row + col) & 1) === 0 ? checkerA : checkerB;
+        gridCtx.fillRect(col * scale + offsetX, y, scale, scale);
+      }
+    }
+
+    // current slice + a ghost of the slice "one step back", from the single
+    // flat block store — filtered by whichever coordinate the active axis maps to "layer".
+    const pad = scale > 8 ? 1 : 0;
+    blocks.forEach((color, key) => {
+      const [x, y, z] = key.split(',').map(Number);
+      const d = decompose(x, y, z, axis);
+      if (d.col < colStart || d.col > colEnd || d.row < rowStart || d.row > rowEnd) return;
+      if (d.layer === layerIndex){
+        gridCtx.fillStyle = color;
+        gridCtx.fillRect(d.col * scale + offsetX + pad, d.row * scale + offsetY + pad, scale - pad*2, scale - pad*2);
+      } else if (d.layer === layerIndex - 1){
+        gridCtx.globalAlpha = 0.25;
+        gridCtx.fillStyle = color;
+        gridCtx.fillRect(d.col * scale + offsetX, d.row * scale + offsetY, scale, scale);
+        gridCtx.globalAlpha = 1;
+      }
+    });
+
+    // grid lines, only when zoomed in enough to be useful
+    if (scale >= 8){
+      gridCtx.strokeStyle = gridLineColor;
+      gridCtx.lineWidth = 1;
+      for (let c = colStart; c <= colEnd + 1; c++){
+        const x = Math.round(c * scale + offsetX) + 0.5;
+        gridCtx.beginPath(); gridCtx.moveTo(x, 0); gridCtx.lineTo(x, h); gridCtx.stroke();
+      }
+      for (let r = rowStart; r <= rowEnd + 1; r++){
+        const y = Math.round(r * scale + offsetY) + 0.5;
+        gridCtx.beginPath(); gridCtx.moveTo(0, y); gridCtx.lineTo(w, y); gridCtx.stroke();
+      }
+    }
+  }
+
+  function screenToCell(clientX, clientY){
+    const rect = gridCanvas.getBoundingClientRect();
+    const sx = clientX - rect.left, sy = clientY - rect.top;
+    return {
+      col: Math.floor((sx - offsetX) / scale),
+      row: Math.floor((sy - offsetY) / scale)
+    };
+  }
+
+  function paintAt(clientX, clientY, forceErase){
+    const { col, row } = screenToCell(clientX, clientY);
+    const { x, y, z } = compose(col, row, layerIndex, axis);
+    const key = k3(x, y, z);
+    const erase = forceErase || tool === 'erase';
+    if (erase){
+      if (blocks.has(key)) blocks.delete(key);
+    } else if (blocks.get(key) === currentColor){
+      // clicking a cell that's already this color clears it back to empty
+      blocks.delete(key);
+    } else {
+      blocks.set(key, currentColor);
+    }
+    gridDirty = true;
+    previewDirty = true;
+  }
+
+  // A press that doesn't move (beyond a small threshold) paints a cell.
+  // A press that moves pans the page around, like dragging a map — and since
+  // the page is infinite, there's no clamping: it can go anywhere.
+  const DRAG_THRESHOLD = 5;
+  let dragState = null; // { x, y, startOffsetX, startOffsetY, button, pointerId, dragging }
+
+  gridCanvas.addEventListener('pointerdown', (e) => {
+    gridCanvas.setPointerCapture(e.pointerId);
+    dragState = {
+      x: e.clientX, y: e.clientY,
+      startOffsetX: offsetX, startOffsetY: offsetY,
+      button: e.button, pointerId: e.pointerId, dragging: false
+    };
+  });
+  gridCanvas.addEventListener('pointermove', (e) => {
+    const { col, row } = screenToCell(e.clientX, e.clientY);
+    const w = compose(col, row, layerIndex, axis);
+    coordReadout.textContent = 'x ' + w.x + ', y ' + w.y + ', z ' + w.z;
+
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    const dx = e.clientX - dragState.x;
+    const dy = e.clientY - dragState.y;
+    if (!dragState.dragging && Math.hypot(dx, dy) > DRAG_THRESHOLD){
+      dragState.dragging = true;
+      gridCanvas.classList.add('dragging');
+    }
+    if (dragState.dragging){
+      offsetX = dragState.startOffsetX + dx;
+      offsetY = dragState.startOffsetY + dy;
+      gridDirty = true;
+    }
+  });
+  gridCanvas.addEventListener('pointerup', (e) => {
+    if (!dragState || e.pointerId !== dragState.pointerId) return;
+    if (!dragState.dragging){
+      paintAt(e.clientX, e.clientY, dragState.button === 2);
+    }
+    gridCanvas.classList.remove('dragging');
+    dragState = null;
+  });
+  gridCanvas.addEventListener('pointercancel', () => {
+    gridCanvas.classList.remove('dragging');
+    dragState = null;
+  });
+  gridCanvas.addEventListener('contextmenu', (e) => e.preventDefault());
+
+  // ctrl/cmd + wheel to zoom, centered on the cursor
+  gridScroll.addEventListener('wheel', (e) => {
+    if (e.ctrlKey || e.metaKey){
+      e.preventDefault();
+      const rect = gridCanvas.getBoundingClientRect();
+      zoomAt(e.clientX - rect.left, e.clientY - rect.top, e.deltaY < 0 ? 1.12 : 1/1.12);
+    }
+  }, { passive: false });
+
+  // ---------------- Clear ----------------
+  clearLayerBtn.addEventListener('click', () => {
+    const toDelete = [];
+    blocks.forEach((color, key) => {
+      const [x,y,z] = key.split(',').map(Number);
+      if (decompose(x,y,z,axis).layer === layerIndex) toDelete.push(key);
+    });
+    if (toDelete.length === 0) return;
+    toDelete.forEach(k => blocks.delete(k));
+    gridDirty = true; previewDirty = true;
+  });
+  clearAllBtn.addEventListener('click', () => {
+    if (blocks.size === 0) return;
+    blocks = new Map();
+    gridDirty = true; previewDirty = true;
+  });
+
+  // ---------------- Export / Import ----------------
+  exportBtn.addEventListener('click', () => {
+    const list = [];
+    blocks.forEach((color, key) => {
+      const [x,y,z] = key.split(',').map(Number);
+      list.push({ x, y, z, color });
+    });
+    const data = { blocks: list };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = 'voxel-build.json';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  });
+
+  importBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      try {
+        const data = JSON.parse(reader.result);
+        const next = new Map();
+        (data.blocks || []).forEach(b => {
+          next.set(k3(b.x|0, b.y|0, b.z|0), b.color || '#5b8a3c');
+        });
+        blocks = next;
+        goToLayer(0);
+        resetView();
+        gridDirty = true; previewDirty = true;
+      } catch (err){
+        gridStatus.textContent = 'Could not read that file';
+        setTimeout(() => gridStatus.textContent = '', 3000);
+      }
+    };
+    reader.readAsText(file);
+    fileInput.value = '';
+  });
+
+  // ---------------- 3D preview (small, static-angle "3D snapshot") ----------------
+  const previewCanvas = document.getElementById('previewCanvas');
+  const pScene = new THREE.Scene();
+  const pCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000);
+  const pRenderer = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true, alpha: true });
+  pRenderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+
+  pScene.add(new THREE.AmbientLight(0xffffff, 0.65));
+  const pLight = new THREE.DirectionalLight(0xffffff, 0.9);
+  pLight.position.set(4, 7, 5);
+  pScene.add(pLight);
+
+  const previewGroup = new THREE.Group();
+  pScene.add(previewGroup);
+  const cubeGeo = new THREE.BoxGeometry(0.92, 0.92, 0.92);
+  const edgesGeo = new THREE.EdgesGeometry(cubeGeo);
+  const edgesMat = new THREE.LineBasicMaterial({ color: 0x000000, transparent: true, opacity: 0.28 });
+
+  // Orbit state the user can drag to rotate, plus a zoom multiplier. Content
+  // is always re-centered at the origin (see previewGroup.position below), so
+  // the camera just orbits around (0,0,0) at previewDist * previewZoom.
+  let pTheta = Math.PI / 4, pPhi = 1.0;
+  let previewDist = 10;
+  let previewZoom = 1;
+  function updatePreviewCamera(){
+    const r = previewDist * previewZoom;
+    const x = r * Math.sin(pPhi) * Math.sin(pTheta);
+    const y = r * Math.cos(pPhi);
+    const z = r * Math.sin(pPhi) * Math.cos(pTheta);
+    pCamera.position.set(x, y, z);
+    pCamera.lookAt(0, 0, 0);
+  }
+
+  function rebuildPreview(){
+    while (previewGroup.children.length){
+      const c = previewGroup.children.pop();
+      if (c.material) c.material.dispose();
+    }
+    let minX=Infinity,maxX=-Infinity,minY=Infinity,maxY=-Infinity,minZ=Infinity,maxZ=-Infinity;
+    let count = 0;
+    blocks.forEach((color, key) => {
+      const [x,y,z] = key.split(',').map(Number);
+      const mesh = new THREE.Mesh(cubeGeo, new THREE.MeshStandardMaterial({ color: new THREE.Color(color), roughness: 0.8 }));
+      mesh.position.set(x, y, z);
+      const edges = new THREE.LineSegments(edgesGeo, edgesMat);
+      edges.position.copy(mesh.position);
+      previewGroup.add(mesh);
+      previewGroup.add(edges);
+      count++;
+      if (x<minX)minX=x; if (x>maxX)maxX=x;
+      if (y<minY)minY=y; if (y>maxY)maxY=y;
+      if (z<minZ)minZ=z; if (z>maxZ)maxZ=z;
+    });
+
+    const emptyNote = document.getElementById('previewEmptyNote');
+    if (count === 0){
+      previewCanvas.style.display = 'none';
+      if (!emptyNote){
+        const note = document.createElement('div');
+        note.id = 'previewEmptyNote';
+        note.className = 'empty-note';
+        note.textContent = 'No blocks yet';
+        document.querySelector('.preview-box').appendChild(note);
+      }
+      previewLabel.textContent = 'Preview';
+      return;
+    } else {
+      previewCanvas.style.display = 'block';
+      if (emptyNote) emptyNote.remove();
+    }
+
+    const cx = (minX+maxX)/2, cy = (minY+maxY)/2, cz = (minZ+maxZ)/2;
+    previewGroup.position.set(-cx, -cy, -cz);
+    const span = Math.max(maxX-minX, maxY-minY, maxZ-minZ, 1) + 2;
+    previewDist = span * 1.6;
+    updatePreviewCamera();
+    previewLabel.textContent = count + (count===1?' block':' blocks');
+  }
+
+  // Drag to rotate, pinch (two fingers) or wheel to zoom.
+  const PREVIEW_MIN_ZOOM = 0.25, PREVIEW_MAX_ZOOM = 4;
+  let previewDrag = null;
+  let activePreviewPointers = new Map();
+  let pinchStartDist = null, pinchStartZoom = 1;
+
+  previewCanvas.addEventListener('pointerdown', (e) => {
+    previewCanvas.setPointerCapture(e.pointerId);
+    activePreviewPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (activePreviewPointers.size === 1){
+      previewDrag = { x: e.clientX, y: e.clientY, theta: pTheta, phi: pPhi, pointerId: e.pointerId };
+      previewCanvas.classList.add('dragging');
+    } else if (activePreviewPointers.size === 2){
+      previewDrag = null;
+      const pts = [...activePreviewPointers.values()];
+      pinchStartDist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      pinchStartZoom = previewZoom;
+    }
+  });
+  previewCanvas.addEventListener('pointermove', (e) => {
+    if (!activePreviewPointers.has(e.pointerId)) return;
+    activePreviewPointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (activePreviewPointers.size >= 2){
+      const pts = [...activePreviewPointers.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinchStartDist){
+        previewZoom = clamp(pinchStartZoom * (pinchStartDist / dist), PREVIEW_MIN_ZOOM, PREVIEW_MAX_ZOOM);
+        updatePreviewCamera();
+      }
+      return;
+    }
+    if (previewDrag && e.pointerId === previewDrag.pointerId){
+      const dx = e.clientX - previewDrag.x, dy = e.clientY - previewDrag.y;
+      pTheta = previewDrag.theta - dx * 0.008;
+      pPhi = clamp(previewDrag.phi - dy * 0.008, 0.1, Math.PI - 0.1);
+      updatePreviewCamera();
+    }
+  });
+  function endPreviewPointer(e){
+    activePreviewPointers.delete(e.pointerId);
+    if (activePreviewPointers.size < 2) pinchStartDist = null;
+    if (previewDrag && e.pointerId === previewDrag.pointerId) previewDrag = null;
+    if (activePreviewPointers.size === 0) previewCanvas.classList.remove('dragging');
+  }
+  previewCanvas.addEventListener('pointerup', endPreviewPointer);
+  previewCanvas.addEventListener('pointercancel', endPreviewPointer);
+
+  previewCanvas.addEventListener('wheel', (e) => {
+    e.preventDefault();
+    previewZoom = clamp(previewZoom * (e.deltaY < 0 ? 1/1.1 : 1.1), PREVIEW_MIN_ZOOM, PREVIEW_MAX_ZOOM);
+    updatePreviewCamera();
+  }, { passive: false });
+
+  // Expand / collapse toggle
+  const previewBoxEl = document.querySelector('.preview-box');
+  const previewExpandBtn = document.getElementById('previewExpandBtn');
+  let previewExpanded = false;
+  previewExpandBtn.addEventListener('click', () => {
+    previewExpanded = !previewExpanded;
+    previewBoxEl.classList.toggle('expanded', previewExpanded);
+    previewExpandBtn.textContent = previewExpanded ? '⤡' : '⤢';
+    previewExpandBtn.title = previewExpanded ? 'Shrink preview' : 'Expand preview';
+  });
+
+  function resizePreviewRenderer(){
+    const s = previewCanvas.parentElement.clientWidth;
+    pRenderer.setSize(s, s, false);
+    pCamera.aspect = 1;
+    pCamera.updateProjectionMatrix();
+  }
+  new ResizeObserver(resizePreviewRenderer).observe(document.querySelector('.preview-box'));
+
+  // ---------------- Main render/update loop ----------------
+  function loop(){
+    requestAnimationFrame(loop);
+    if (gridDirty){ drawGrid(); gridDirty = false; }
+    if (previewDirty){ rebuildPreview(); previewDirty = false; }
+    pRenderer.render(pScene, pCamera);
+  }
+
+  // ---------------- Init ----------------
+  function seedStarterBlocks(){
+    for (let x = 0; x < 8; x++){
+      for (let z = 0; z < 8; z++){
+        blocks.set(k3(x,0,z), '#5b8a3c');
+      }
+    }
+  }
+
+  function init(){
+    setTheme('light');
+    buildPalette();
+    setAxis('Y');
+    seedStarterBlocks();
+    resizePreviewRenderer();
+    updateLayerReadout();
+    resizeCanvasToViewport();
+    requestAnimationFrame(() => { resetView(); previewDirty = true; });
+    loop();
+  }
+  init();
+})();
+</script>
+</body>
+</html>
