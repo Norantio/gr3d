@@ -244,7 +244,7 @@ function cellAt(clientX, clientY) { const rect = gridCanvas.getBoundingClientRec
 function paint(clientX, clientY, forceErase = false) { const { col, row } = cellAt(clientX, clientY); const { x, y, z } = compose(col, row, state.layer, state.axis); const key = keyOf(x, y, z); recordHistory(); if (forceErase || state.tool === 'erase' || state.blocks.get(key) === state.color) state.blocks.delete(key); else state.blocks.set(key, state.color); markGrid(); }
 function stampShape(clientX, clientY) { const { col, row } = cellAt(clientX, clientY); const width = clamp(Number(state.shapeWidth) || 1, 1, 100); const height = state.shape === 'circle' ? width : clamp(Number(state.shapeHeight) || 1, 1, 100); const startCol = col - Math.floor((width - 1) / 2); const startRow = row - Math.floor((height - 1) / 2); recordHistory(); const outline = new Set(); if (state.shape === 'circle') { const radius = (width - 1) / 2; const center = radius; const samples = Math.max(64, Math.ceil(radius * Math.PI * 8)); for (let sample = 0; sample < samples; sample += 1) { const angle = (sample / samples) * Math.PI * 2; const dx = Math.round(center + Math.cos(angle) * radius); const dy = Math.round(center + Math.sin(angle) * radius); outline.add(`${dx},${dy}`); } } else { for (let dy = 0; dy < height; dy += 1) for (let dx = 0; dx < width; dx += 1) if (dx === 0 || dx === width - 1 || dy === 0 || dy === height - 1) outline.add(`${dx},${dy}`); } outline.forEach((cell) => { const [dx, dy] = cell.split(',').map(Number); const world = compose(startCol + dx, startRow + dy, state.layer, state.axis); state.blocks.set(keyOf(world.x, world.y, world.z), state.color); }); markGrid(); }
 
-const pScene = new THREE.Scene(); const pCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000); const pRenderer = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true, alpha: true }); pRenderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); pScene.add(new THREE.AmbientLight(0xffffff, 0.75)); const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(4, 7, 5); pScene.add(light); const previewGroup = new THREE.Group(); pScene.add(previewGroup); const cubeGeometry = new THREE.BoxGeometry(0.92, 0.92, 0.92); const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x18201d, transparent: true, opacity: 0.3 }); let theta = Math.PI / 4; let phi = 1; let previewDistance = 10; let previewZoom = 1;
+const pScene = new THREE.Scene(); const pCamera = new THREE.PerspectiveCamera(35, 1, 0.1, 1000); const pRenderer = new THREE.WebGLRenderer({ canvas: previewCanvas, antialias: true, alpha: true }); pRenderer.setPixelRatio(Math.min(devicePixelRatio || 1, 2)); pScene.add(new THREE.AmbientLight(0xffffff, 0.75)); const light = new THREE.DirectionalLight(0xffffff, 1); light.position.set(4, 7, 5); pScene.add(light); const previewGroup = new THREE.Group(); pScene.add(previewGroup); const cubeGeometry = new THREE.BoxGeometry(1, 1, 1); const edgeMaterial = new THREE.LineBasicMaterial({ color: 0x18201d, transparent: true, opacity: 0.55 }); let theta = Math.PI / 4; let phi = 1; let previewDistance = 10; let previewZoom = 1;
 const FACE_DEFS = [
   { name: 'x+', axes: [1, 0, 0], edges: [[[1, 0, 0], [1, 1, 0]], [[1, 1, 0], [1, 1, 1]], [[1, 1, 1], [1, 0, 1]], [[1, 0, 1], [1, 0, 0]]] },
   { name: 'x-', axes: [-1, 0, 0], edges: [[[0, 0, 0], [0, 1, 0]], [[0, 1, 0], [0, 1, 1]], [[0, 1, 1], [0, 0, 1]], [[0, 0, 1], [0, 0, 0]]] },
@@ -277,10 +277,6 @@ function createOutlineForBlock(x, y, z, color) {
   });
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const outline = new THREE.LineSegments(geometry, edgeMaterial.clone());
-  outline.material.transparent = true;
-  outline.material.opacity = 0.95;
-  outline.material.depthTest = false;
-  outline.renderOrder = 10;
   outline.position.set(x, y, z);
   return outline;
 }
