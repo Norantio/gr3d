@@ -5,6 +5,9 @@ const palette = [
   ['Grass', '#5b8a3c'], ['Dirt', '#7a5230'], ['Stone', '#8a8a8e'], ['Wood', '#6b4a2b'],
   ['Leaves', '#3f7d3f'], ['Sand', '#d9c07a'], ['Water', '#3a6fb0'], ['Brick', '#9a4a3a'],
   ['Snow', '#eef2f5'], ['Coal', '#2b2b2e'], ['Gold', '#d4af37'], ['Glass', '#bfe3e8'],
+  ['Red', '#d94343'], ['Orange', '#e78324'], ['Yellow', '#f2d13d'], ['Lime', '#8fcf3c'],
+  ['Emerald', '#22a66f'], ['Teal', '#228f91'], ['Cyan', '#35b8d0'], ['Blue', '#315cbe'],
+  ['Navy', '#243b75'], ['Purple', '#7650ad'], ['Magenta', '#c74489'], ['Pink', '#ef91ae'],
 ];
 const keyOf = (x, y, z) => `${x},${y},${z}`;
 const compose = (col, row, layer, axis) => axis === 'Y' ? { x: col, y: layer, z: -row } : axis === 'X' ? { x: layer, y: -row, z: col } : { x: col, y: -row, z: layer };
