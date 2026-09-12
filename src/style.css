@@ -46,3 +46,6 @@ button, input { font: inherit; } button { border: 1px solid var(--line); border-
 .axis-z { background: #4b78b4; transform: rotate(35deg); }.axis-z::after { border-left: 7px solid #4b78b4; }
 .axis-label { position: absolute; z-index: 3; font: 500 11px 'DM Mono', monospace; }.axis-label-x { right: 1px; top: 35px; color: #d85c4a; }.axis-label-y { left: 34px; top: 0; color: #438c63; }.axis-label-z { right: 7px; bottom: 7px; color: #4b78b4; }
 .preview-actions { display: flex; align-items: center; gap: 2px; pointer-events: auto; }.preview-view-button { width: 22px; height: 22px; padding: 0; border: 0; background: transparent; color: var(--muted); font: 11px 'DM Mono', monospace; }.preview-view-button:hover { color: var(--accent); background: var(--panel-2); }.preview-actions .icon-button { pointer-events: auto; }
+.preview-panel { height: 220px; aspect-ratio: auto; transition-property: width, height; }
+.preview-panel.expanded { height: min(62vw, 650px); }
+@media (max-width: 780px) { .preview-panel { height: 170px; }.preview-panel.expanded { height: min(78vw, 500px); } }
