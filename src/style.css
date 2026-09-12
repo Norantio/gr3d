@@ -54,3 +54,4 @@ button, input { font: inherit; } button { border: 1px solid var(--line); border-
 #editorView:not([hidden]) .workspace { height: auto; min-height: 0; flex: 1; }
 @media (max-width: 780px) { #editorView:not([hidden]) { height: auto; min-height: 100%; }#editorView:not([hidden]) .workspace { height: auto; min-height: calc(100vh - 68px); flex: none; } }
 .swatches { grid-template-columns: repeat(8, 1fr); }
+.preview-resize-handle::before, .preview-resize-handle::after { display: none; }
