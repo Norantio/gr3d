@@ -49,3 +49,7 @@ button, input { font: inherit; } button { border: 1px solid var(--line); border-
 .preview-panel { height: 220px; aspect-ratio: auto; transition-property: width, height; }
 .preview-panel.expanded { height: min(62vw, 650px); }
 @media (max-width: 780px) { .preview-panel { height: 170px; }.preview-panel.expanded { height: min(78vw, 500px); } }
+
+#editorView:not([hidden]) { display: flex; height: 100%; min-height: 0; flex-direction: column; }
+#editorView:not([hidden]) .workspace { height: auto; min-height: 0; flex: 1; }
+@media (max-width: 780px) { #editorView:not([hidden]) { height: auto; min-height: 100%; }#editorView:not([hidden]) .workspace { height: auto; min-height: calc(100vh - 68px); flex: none; } }
