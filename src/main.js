@@ -2,12 +2,14 @@ import * as THREE from 'three';
 import './style.css';
 
 const palette = [
-  ['Grass', '#5b8a3c'], ['Dirt', '#7a5230'], ['Stone', '#8a8a8e'], ['Wood', '#6b4a2b'],
-  ['Leaves', '#3f7d3f'], ['Sand', '#d9c07a'], ['Water', '#3a6fb0'], ['Brick', '#9a4a3a'],
-  ['Snow', '#eef2f5'], ['Coal', '#2b2b2e'], ['Gold', '#d4af37'], ['Glass', '#bfe3e8'],
-  ['Red', '#d94343'], ['Orange', '#e78324'], ['Yellow', '#f2d13d'], ['Lime', '#8fcf3c'],
-  ['Emerald', '#22a66f'], ['Teal', '#228f91'], ['Cyan', '#35b8d0'], ['Blue', '#315cbe'],
-  ['Navy', '#243b75'], ['Purple', '#7650ad'], ['Magenta', '#c74489'], ['Pink', '#ef91ae'],
+  ['Red', '#e53935'], ['Orange', '#f57c00'], ['Yellow', '#fbc02d'], ['Green', '#43a047'],
+  ['Blue', '#1e88e5'], ['Indigo', '#3949ab'], ['Violet', '#8e24aa'], ['Black', '#202124'],
+  ['Rose', '#ef9a9a'], ['Peach', '#ffcc80'], ['Pale yellow', '#fff59d'], ['Mint', '#a5d6a7'],
+  ['Sky', '#90caf9'], ['Periwinkle', '#9fa8da'], ['Lavender', '#ce93d8'], ['Light gray', '#c7c9cc'],
+  ['Brick', '#9a4a3a'], ['Copper', '#b56a2a'], ['Gold', '#d4af37'], ['Grass', '#5b8a3c'],
+  ['Water', '#3a6fb0'], ['Deep indigo', '#283593'], ['Purple', '#6a3d8f'], ['Gray', '#777b80'],
+  ['Burgundy', '#6d2525'], ['Brown', '#6b4a2b'], ['Olive', '#827717'], ['Forest', '#2e5d34'],
+  ['Navy', '#243b75'], ['Midnight', '#1a237e'], ['Plum', '#4a235a'], ['White', '#eef2f5'],
 ];
 const keyOf = (x, y, z) => `${x},${y},${z}`;
 const compose = (col, row, layer, axis) => axis === 'Y' ? { x: col, y: layer, z: -row } : axis === 'X' ? { x: layer, y: -row, z: col } : { x: col, y: -row, z: layer };
