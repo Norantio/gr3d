@@ -63,7 +63,6 @@ function appTemplate() {
         <canvas id="gridCanvas"></canvas>
         <div class="coordinate-readout" id="coordinateReadout">x 0 · y 0 · z 0</div>
         <div class="preview-panel" id="previewPanel"><div class="preview-heading"><span>Orbit preview</span><button class="icon-button" id="expandPreview" title="Expand preview" aria-label="Expand preview">⤢</button></div><canvas id="previewCanvas"></canvas><div id="emptyPreview" class="empty-preview">Your build will appear here.</div><div class="preview-resize-handle" id="previewResizeHandle" role="separator" aria-label="Resize orbit preview" title="Drag to resize"></div></div>
-        <div class="stage-note"><span class="dot"></span><span>Slice editing active</span></div>
       </section>
     </main></div>`;
 }
