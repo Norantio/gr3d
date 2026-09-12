@@ -57,6 +57,9 @@ button, input { font: inherit; } button { border: 1px solid var(--line); border-
 .preview-resize-handle::before, .preview-resize-handle::after { display: none; }
 .preview-panel { box-shadow: 0 10px 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
 .preview-panel { background: var(--panel); }
-.topbar { position: relative; z-index: 4; box-shadow: 0 10px 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
-.inspector { position: relative; z-index: 3; box-shadow: 10px 0 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
+.topbar { position: relative; z-index: 4; }
+.topbar::after { position: absolute; right: 0; bottom: -30px; left: 310px; height: 30px; pointer-events: none; content: ''; background: linear-gradient(to bottom, rgba(96,96,96,.28), transparent); }
+.inspector { position: relative; z-index: 3; }
+.inspector::after { position: absolute; top: 0; right: -30px; bottom: 0; width: 30px; pointer-events: none; content: ''; background: linear-gradient(to right, rgba(96,96,96,.28), transparent); }
+@media (max-width: 780px) { .topbar::after, .inspector::after { display: none; } }
 .coordinate-readout { right: 18px; left: auto; }
