@@ -57,3 +57,5 @@ button, input { font: inherit; } button { border: 1px solid var(--line); border-
 .preview-resize-handle::before, .preview-resize-handle::after { display: none; }
 .preview-panel { box-shadow: 0 10px 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
 .preview-panel { background: var(--panel); }
+.topbar { position: relative; z-index: 4; box-shadow: 0 10px 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
+.inspector { position: relative; z-index: 3; box-shadow: 10px 0 30px rgba(96,96,96,.4), 0 0 12px rgba(96,96,96,.18); }
