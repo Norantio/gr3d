@@ -263,11 +263,24 @@ function createOutlineForBlock(x, y, z, color) {
     const [dx, dy, dz] = face.axes;
     if (sameColorNeighbor(dx, dy, dz)) return;
     face.edges.forEach(([start, end]) => {
-      points.push(new THREE.Vector3(start[0] - 0.5, start[1] - 0.5, start[2] - 0.5), new THREE.Vector3(end[0] - 0.5, end[1] - 0.5, end[2] - 0.5));
+      const tangentAxis = start.findIndex((value, axis) => value !== end[axis]);
+      const normalAxis = face.axes.findIndex((value) => value !== 0);
+      const acrossAxis = [0, 1, 2].find((axis) => axis !== tangentAxis && axis !== normalAxis);
+      const across = [0, 0, 0];
+      across[acrossAxis] = start[acrossAxis] === 0 ? -1 : 1;
+      if (sameColorNeighbor(...across)) return;
+      points.push(
+        new THREE.Vector3(start[0] - 0.5, start[1] - 0.5, start[2] - 0.5),
+        new THREE.Vector3(end[0] - 0.5, end[1] - 0.5, end[2] - 0.5),
+      );
     });
   });
   const geometry = new THREE.BufferGeometry().setFromPoints(points);
   const outline = new THREE.LineSegments(geometry, edgeMaterial.clone());
+  outline.material.transparent = true;
+  outline.material.opacity = 0.95;
+  outline.material.depthTest = false;
+  outline.renderOrder = 10;
   outline.position.set(x, y, z);
   return outline;
 }
